@@ -8,7 +8,7 @@ PREREQUISITES:
 - python libraries:
     - evdev
     - pynput
-    - tqdm for F R O G
+    - tqdm for F R O G R E S S   B A R
 ''')
 from time import sleep
 from pynput.keyboard import Controller
@@ -26,7 +26,7 @@ frog = r'''
   \`        `-\
    `
 FROGRESS BAR'''
-timestr = lambda sec: f"{int(eta/3600)}h {int((eta%3600)//60)}m {int((eta%3600)%60)}s" 
+timestr = lambda sec: f"{int(sec/3600)}h {int((sec%3600)//60)}m {int((sec%3600)%60)}s" 
 
 def mc_command(cmd):
     ui.write(e.EV_KEY, e.KEY_T, 1)
