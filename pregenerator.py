@@ -16,7 +16,8 @@ from evdev import uinput, ecodes as e
 import sys, math
 from tqdm import tqdm
 
-command = "/tp @s {loc_x} {loc_y} {loc_z}\n"
+client_command = "/tp @s {loc_x} {loc_y} {loc_z}\n"
+server_command = "tp {player} {loc_x} {loc_y} {loc_z}\n"
 frog = r'''
   __   ___.--'_`.
  ( _`.'. -   'o` )
@@ -28,17 +29,34 @@ frog = r'''
 FROGRESS BAR'''
 timestr = lambda sec: f"{int(eta/3600)}h {int((eta%3600)//60)}m {int((eta%3600)%60)}s" 
 
-def mc_command(cmd):
-    ui.write(e.EV_KEY, e.KEY_T, 1)
-    ui.syn()
-    sleep(0.2)
-    ui.write(e.EV_KEY, e.KEY_T, 0)
-    ui.syn()
-    sleep(0.1)
-    keyboard.type(cmd)
+def mc_command(loc, client, player):
+    if client:
+        ui.write(e.EV_KEY, e.KEY_T, 1)
+        ui.syn()
+        sleep(0.2)
+        ui.write(e.EV_KEY, e.KEY_T, 0)
+        ui.syn()
+        sleep(0.1)
+
+        keyboard.type(client_command.format(loc_x=loc[0],loc_y=loc[1],loc_z=loc[2]))
+
+    else:
+        keyboard.type(server_command.format(loc_x=loc[0],loc_y=loc[1],loc_z=loc[2],player=player))
 
 try:
     print("COLLECTING DATA FOR THE SCAN\n")
+
+    ans = ' '
+    while not ans in ['c','s']:
+        ans = input('Client or Server? (c/s) ').lower()
+    client = True if ans == 'c' else False
+
+    username = ""
+    if not client:
+        ans = ''
+        while not ans:
+            ans = input('Input username: (str) ').strip()
+        username = ans
 
     ans = ' '
     while not ans.isdigit():
@@ -71,7 +89,7 @@ try:
 
     eta = len(tp_pos)*(sleep_duration+0.5)
     print(f'FINAL CHECK: {len(tp_pos)} positions calculated, each position will load for {sleep_duration} seconds, which (including overhead) approx. totals to: '+timestr(eta))
-    input('FINAL CHECK: Confirm the values and press ENTER when you are ready to switch to your Minecraft client.')
+    input('FINAL CHECK: Confirm the values and press ENTER when you are ready to switch to your MC {}.'.format('client' if client else 'console'))
 except KeyboardInterrupt:
     exit(0)
 
@@ -79,14 +97,14 @@ except KeyboardInterrupt:
 keyboard = Controller()
 ui = uinput.UInput()
 print('\n====> START <=====')
-print('Alright, let\'s do this!\nKeyboard action will start in 5 seconds. Switch to your MC client, NOW.')
+print('Alright, let\'s do this!\nKeyboard action will start in 5 seconds. Switch to your MC {}, NOW.'.format('client' if client else 'console'))
 print(frog)
 try:
     sleep(5)
     for pos in tqdm (tp_pos, 
                 desc="Chunk pregeneration", 
                 ascii=False, ncols=100):
-        mc_command(command.format(loc_x=pos[0],loc_y='100',loc_z=pos[1]))
+        mc_command(loc=[pos[0],100,pos[1]],client=client,player=username)
         sleep(sleep_duration)
     print("\nChunkloader completed the run successfully.\n=====> END <======")
 except KeyboardInterrupt:
